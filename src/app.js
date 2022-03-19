@@ -5,12 +5,27 @@ const app = require('./config/server')
 const config = require('./config/app')
 
 let server
+let db
+
+mongoose.connect(config.mongoose.url, config.mongoose.options)
+db = mongoose.connection
+db.on('error', (err) => unexpectedErrorHandler(err))
+db.once('open', () => logger.info(`Database Connected`))
 
 server = app.listen(config.port, () => {
     logger.info(`Listening to port ${config.port}`)
 })
 
+const exitClients = () => {
+    const clients = Object.keys(WhatsApps)
+    clients.map((c) => {
+        const client = WhatsApps[c]
+        client.close()
+    })
+}
+
 const exitHandler = () => {
+    exitClients()
     if (server) {
         server.close(() => {
             logger.info('Server closed')
@@ -31,6 +46,7 @@ process.on('unhandledRejection', unexpectedErrorHandler)
 
 process.on('SIGTERM', () => {
     logger.info('SIGTERM received')
+    exitClients()
     if (server) {
         server.close()
     }
