@@ -1,0 +1,9 @@
+{
+  "restartable": "rs",
+  "ignore": [
+    ".git",
+    "node_modules/**/*",
+    "src/storage/**/*"
+  ],
+  "ext": "ejs,js"
+}

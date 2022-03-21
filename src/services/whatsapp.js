@@ -40,6 +40,8 @@ class Whatsapp {
                     //Create session wss return "serverClose" case server for close
                     console.log('Session name: ', session);
                     this.instance.session = session
+
+                    Socket.io.emit('wa:status', { status: statusSession })
                 },
                 {
                     multidevice: true,
