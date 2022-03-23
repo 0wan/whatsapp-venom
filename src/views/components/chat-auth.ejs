@@ -1,6 +1,7 @@
-<div x-data="{ open: true, token: ''}"
-     x-init="open = !$store.instance.token && !$store.instance.ready; token = $store.instance.token"
-     @keydown.window.escape="open = false"
+<div x-data="{ open: $store.instance.showQr}"
+     x-init="$watch('$store.instance.showQr', function(v) {
+       open = v
+     });"
      x-show="open"
      x-ref="dialog" class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" aria-modal="true">
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -15,34 +16,17 @@
             <div>
                 <div class="mt-3 text-center sm:mt-5">
                     <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                        <span x-show="$store.instance.showInit()"> Mulai Sesi </span>
-                        <span x-show="$store.instance.showQr()"> Scan QRCode </span>
+                        <span x-show="$store.instance.showQr"> Scan QRCode </span>
                         <span x-show="$store.instance.loading"> Mohon tunggu... </span>
                     </h3>
-                    <div class="mt-2">
-                        <div x-show="$store.instance.showInit()" class="text-sm text-gray-500">
-                            <input x-model="token" type="text" name="token" id="token" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md text-center">
-                        </div>
-                        <div x-show="$store.instance.showQr()" class="flex items-center justify-center">
-                            <img src="" alt="" id="qrcode_box" width="200" height="200" x-bind:src="$store.instance.qr" />
+                    <div class="mt-6">
+                        <div x-show="open" class="flex items-center justify-center">
+                            <img class="p-4" src="" alt="" id="qrcode_box" width="250" height="250" x-bind:src="$store.instance.qr" />
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="mt-5 sm:mt-6 block space-y-4">
-                <button x-show="$store.instance.showInit()" type="button" class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm"
-                        @click="$store.instance.initialize(token)">
-                    Mulai
-                </button>
-                <button x-show="$store.instance.showQr()" type="button" class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm"
-                        @click="$store.instance.qrcode()">
-                    Refresh QR (klik setiap 10 detik)
-                </button>
-                <button x-show="$store.instance.showQr()" type="button" class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm"
-                        @click="$store.instance.isReady()">
-                    Ready
-                </button>
-            </div>
+            <!--footer-->
         </div>
 
     </div>

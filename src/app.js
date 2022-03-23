@@ -3,6 +3,7 @@ const logger = require('pino')()
 
 const app = require('./config/server')
 const config = require('./config/app')
+const {Whatsapp} = require("./services/whatsapp");
 
 let server
 let db
@@ -14,6 +15,13 @@ db.once('open', () => logger.info(`Database Connected`))
 
 server = app.listen(config.port, () => {
     logger.info(`Listening to port ${config.port}`)
+})
+
+server.on('listening', async () => {
+    logger.info(`Starting session ${config.sessionName}`)
+    WhatsApps[config.sessionName] = new Whatsapp(config.sessionName)
+
+    await WhatsApps[config.sessionName].init()
 })
 
 const exitClients = () => {

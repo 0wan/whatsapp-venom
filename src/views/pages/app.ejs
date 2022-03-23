@@ -6,17 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Whatsapp Hub</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp"></script>
-    <!-- Alpine Plugins -->
-    <script src="https://unpkg.com/@alpinejs/persist@3.9.1/dist/cdn.min.js"></script>
-
     <!-- Alpine Core -->
     <script defer src="https://unpkg.com/alpinejs@3.9.1/dist/cdn.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/locale/id.min.js" integrity="sha512-he8U4ic6kf3kustvJfiERUpojM8barHoz0WYpAUDWQVn61efpm3aVAD8RWL8OloaDDzMZ1gZiubF9OSdYBqHfQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script>
-        moment().locale('id');
-    </script>
 </head>
 <body class="h-full overflow-hidden">
 <div x-data="{ open: false }" @keydown.window.escape="open = false" class="h-full flex">
@@ -56,14 +50,14 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path>
                             </svg>
-                            Trending
+                            Group
                         </a>
 
                         <a href="#" class="group p-2 rounded-md flex items-center text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900">
                             <svg class="mr-4 h-6 w-6 text-gray-400 group-hover:text-gray-500" x-description="Heroicon name: outline/bookmark-alt" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 4v12l-4-2-4 2V4M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                             </svg>
-                            Bookmarks
+                            Archive
                         </a>
 
                         <a href="#" class="group p-2 rounded-md flex items-center text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900">
@@ -106,14 +100,14 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path>
                             </svg>
-                            <span class="sr-only">Trending</span>
+                            <span class="sr-only">Group</span>
                         </a>
 
                         <a href="#" class="flex items-center p-4 rounded-lg text-indigo-200 hover:bg-indigo-700">
                             <svg class="h-6 w-6" x-description="Heroicon name: outline/bookmark-alt" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 4v12l-4-2-4 2V4M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                             </svg>
-                            <span class="sr-only">Bookmarks</span>
+                            <span class="sr-only">Archive</span>
                         </a>
 
                         <a href="#" class="flex items-center p-4 rounded-lg text-indigo-200 hover:bg-indigo-700">
@@ -171,96 +165,41 @@
 </div>
 <%- include('../components/chat-auth'); %>
 <script>
-    var socket = io();
-    socket.on('wa:status', function (payload) {
-        console.log('status', payload)
-    })
+    moment().locale('id');
+
+    var socket = io({
+        autoConnect: false
+    });
 
     document.addEventListener('alpine:init', () => {
         Alpine.store('instance', {
-            token: '' , // Alpine.$persist('').as('instance_token'),
-            selected: '', // Alpine.$persist('').as('instance_selected'),
+            token: '<%= token %>',
+            selected: '',
             loading: true,
-            ready: false,
+            showQr: false,
             qr: '',
             chats: [],
             messages: [],
+            contact: {}, //
 
-            async init() {
-                this.token = window.localStorage.getItem('x-instance-token')
-
-                if (this.token) await this.isReady()
-                if (this.token && !this.ready) {
-                    await this.initialize(this.token)
-                }
-                // ini socket lis
-                if (this.token && this.ready) {
-                    await this.getChat()
-                    this.socketHandler()
-                }
-
-                // Alpine.effect(() => {
-                //     let msg = Alpine.store('instance').messages
-                //     let cht = Alpine.store('instance').chats
-                // })
+            init() {
+                socket.auth = { key: this.token }
+                this.socketHandler()
             },
-            showInit() { return !this.token},
-            showQr() { return this.token && !this.ready },
-            async initialize(token) {
-                const res = await (await fetch('/instance/init?key=' + token)).json()
-                if (res && (res.error !== true)) {
-                    this.token = res.key;
-                    window.localStorage.setItem('x-instance-token', this.token)
-                    await this.qrcode()
-                }
-                else {
-                    alert('Error initialize')
-                }
+            getStatus() {
+                socket.emit('ws:instance:status', { token: this.token })
             },
-            // async login(attempt) {
-            //     this.attempts = attempt
-            //     while (this.attempts < 20) {
-            //         setTimeout(async function () {
-            //             const res = await (await fetch('/instance/qrcode?key=' + this.token)).json()
-            //             if (res && (res.error !== true)) {
-            //                 this.qr = res.qrcode;
-            //             }
-            //             // sleep(1000)
-            //             try { if (this.attempts > 1) await this.makeReady() } catch {}
-            //         }, 5000)
-            //         this.attempts++
-            //     }
-            // },
-            async qrcode() {
-                            const res = await (await fetch('/instance/qrcode?key=' + this.token)).json()
-                            if (res && (res.error !== true)) {
-                                this.qr = res.qrcode;
-                            }
+            getChat() {
+                // const res = await (await fetch('/chat/all?key=' + this.token)).json()
+                // if (res && res.data && (res.error !== true)) this.chats = res.data;
+                socket.emit('ws:chat:all', { token: this.token })
             },
-            async isReady() {
-                const res = await (await fetch('/instance/info?key=' + this.token)).json()
-                if (res && res.data && (res.error !== true)) {
-                    const data = res.data;
-                    if (data.instance && data.instance.status && [
-                        'isLogged',
-                        'qrReadSuccess',
-                        'chatsAvailable'
-                    ].includes(data.instance.status)) {
-                        this.ready = true
-                        this.loading = false
-                        return true
-                    }
-                }
-                return false
-            },
-            async getChat() {
-                const res = await (await fetch('/chat/all?key=' + this.token)).json()
-                if (res && res.data && (res.error !== true)) this.chats = res.data;
-            },
-            async getMessages(phone) {
+            getMessages(phone) {
                 this.messages = [];
-                const res = await ( await fetch('/message/find?key=' + this.token + '&phone=' + encodeURI(phone) )).json();
-                if (res && res.data && (res.error !== true)) this.messages = res.data
+                // const res = await ( await fetch('/message/find?key=' + this.token + '&phone=' + encodeURI(phone) )).json();
+                // if (res && res.data && (res.error !== true)) this.messages = res.data
+                console.log('ws:message:all',phone)
+                socket.emit('ws:message:all', { phone:phone })
             },
             onChatSelected(phone) {
                 this.selected = phone
@@ -290,6 +229,55 @@
                 this.sortChat(to)
             },
             socketHandler() {
+                const that = this
+                console.log('socket init')
+                socket.connect()
+
+                socket.onAny((event, ...args) => {
+                    console.log('socket any')
+                    console.log(event, args);
+                });
+
+                socket.on("connect", () => {
+                    console.log('socket connect')
+                });
+
+                socket.on("connect_error", function (err) {
+                    console.error(err)
+                    if (err.message === "key not available") {
+                        // that.showInit = true
+                    }
+                    if (err.message === "instance not available") {
+                        console.log('socket instance not available')
+                        // that.showInit = true
+                    }
+                });
+
+                socket.on('wa:instance:qr', function ({ qr }) {
+                    that.qr = qr
+                    that.showQr = true
+                })
+
+                socket.on('wa:instance:status', function ({ status }) {
+                    if ([
+                        'isLogged',
+                        'qrReadSuccess',
+                        'chatsAvailable'
+                    ].includes(status)) {
+                        that.showQr = false
+                        that.getChat()
+                    }
+
+                })
+
+                socket.on('wa:chat:all', function ({ data }) {
+                    that.chats = data
+                })
+
+                socket.on('wa:message:all', function ({ data }) {
+                    that.messages = data
+                })
+
                 // listen new chat
                 // listen new message
                 // auto insert message if new message == current selected

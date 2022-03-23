@@ -7,7 +7,6 @@ const QRCode = require('qrcode')
 const venom = require('venom-bot');
 const config = require('../config/app')
 const Message = require('../repositories/message.repository')
-// const MessageAny = require('../repositories/anyMessage.repository')
 
 class Whatsapp {
     client
@@ -32,25 +31,24 @@ class Whatsapp {
                 this.key,
                 (base64Qrimg, asciiQR, attempts, urlCode) => {
                     this.instance.qr = base64Qrimg
+                    Socket.socket.emit('wa:instance:qr', { qr: base64Qrimg, attempts })
                 },
                 (statusSession, session) => {
                     // statusSession: isLogged || notLogged || browserClose || qrReadSuccess || qrReadFail || autocloseCalled || desconnectedMobile || deleteToken || chatsAvailable || deviceNotConnected || serverWssNotConnected || noOpenBrowser
-                    console.log('Status Session: ', statusSession);
                     this.instance.status = statusSession
                     //Create session wss return "serverClose" case server for close
-                    console.log('Session name: ', session);
                     this.instance.session = session
 
-                    Socket.io.emit('wa:status', { status: statusSession })
+                    Socket.socket.emit('wa:instance:status', { status: statusSession })
                 },
                 {
                     multidevice: true,
                     folderNameToken: 'tokens', //folder name when saving `tokens`
                     mkdirFolderToken: path.join(__dirname, '../storage'), //folder directory tokens, just inside the venom folder, example:  { mkdirFolderToken: '/node_modules', } //will save the tokens folder in the node_modules directory
                     logQR: false,
-                    browserArgs: [
-                        '--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
-                    ],
+                    // browserArgs: [
+                    //     '--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
+                    // ],
                 }
             )
             .then((agent) => { this.setHandler(agent) })
@@ -166,7 +164,6 @@ class Whatsapp {
 
         // function to detect incoming call
         this.client.onIncomingCall(async (call) => {
-            console.log(call);
             await this.client?.sendText(call.peerJid, "Maaf, Tidak Dapat Menerima Panggilan!");
         });
 
@@ -357,23 +354,35 @@ class Whatsapp {
 //     const url = await client.getProfilePicFromServer('000000000000@c.us');
 
 
-// Disconnect from service
-//     await client.logout();
+    // Disconnect from service
+    async logout() {
+        return await this.client?.logout();
+    }
 
     // Delete the Service Worker
-    // await client.killServiceWorker();
+    async killServiceWorker() {
+        return await this.client?.killServiceWorker();
+    }
 
-// Load the service again
-//     await client.restartService();
+    // Load the service again
+    async restartService() {
+        return await this.client?.restartService();
+    }
 
-// Get connection state
-//     await client.getConnectionState();
+    // Get connection state
+    async getConnectionState() {
+        return await this.client?.getConnectionState();
+    }
 
-// Get battery level
-//     await client.getBatteryLevel();
+    // Get battery level
+    async getBatteryLevel() {
+        return await this.client?.getBatteryLevel();
+    }
 
-// Is connected
-//     await client.isConnected();
+    // Is connected
+    async isConnected() {
+        return await this.client?.isConnected();
+    }
 
     close() {
         this.client?.close();

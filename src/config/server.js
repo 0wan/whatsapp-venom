@@ -20,6 +20,6 @@ app.use('/', routes)
 app.use(middleware.ServerError)
 
 const server = http.createServer(app);
-global.Socket = new io.Socket(server)
+global.Socket = new io.Server(server)
 
 module.exports = server

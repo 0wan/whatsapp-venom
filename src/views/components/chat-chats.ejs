@@ -46,17 +46,21 @@
                 <!-- Direct messages -->
                 <div class="mt-4">
                     <div class="text-xs font-semibold text-gray-400 uppercase mb-3">Direct messages</div>
-                    <ul class="mb-6">
+                    <ul class="mb-6"
+                        x-data="{ chats: $store.instance.chats }"
+                        x-init="$watch('$store.instance.chats', r => (chats = r))">
+                        <template x-for="chat in chats">
                         <li class="-mx-2">
-                            <button class="flex items-center justify-between w-full p-2 rounded" @click="console.log('select')">
+                            <button class="flex items-center justify-between w-full p-2 rounded"
+                                    @click="function () { $store.instance.contact = chat.contact; $store.instance.onChatSelected(chat.id._serialized) }">
                                 <div class="flex items-center truncate">
                                     <span class="w-8 h-8 rounded-full mr-2">
-                                        <svg class="h-full w-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z"/>
-    </svg>
+                                        <img :src="chat.contact && chat.contact.profilePicThumbObj && chat.contact.profilePicThumbObj.img ? chat.contact.profilePicThumbObj.img : ''" width="32" height="32">
                                     </span>
                                     <div class="truncate">
-                                        <span class="text-sm font-medium text-gray-800">Contact Name</span>
+                                        <span class="text-sm font-medium text-gray-800"
+                                              x-html="chat.contact && chat.contact.displayName ? chat.contact.displayName : (chat.contact.formattedName || '')"
+                                        ></span>
                                     </div>
                                 </div>
                                 <div class="flex items-center ml-2">
@@ -66,6 +70,7 @@
                                 </div>
                             </button>
                         </li>
+                        </template>
                     </ul>
                 </div>
 
