@@ -1,0 +1,64 @@
+<div x-data="{ open: false }"
+     @keydown.window.escape="open = false"
+     x-show="open"
+     @chat-compose.window="open = true"
+     class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" x-ref="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+
+        <div x-show="open" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" x-description="Background overlay, show/hide based on modal state." class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="open = false" aria-hidden="true">
+        </div>
+
+        <!-- This element is to trick the browser into centering the modal contents. -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">​</span>
+
+        <div x-show="open" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-description="Modal panel, show/hide based on modal state." class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <div>
+                <div class="w-full max-w-xl mx-auto mt-3 sm:mt-5">
+
+                    <form action="#" class="relative"
+                          x-data="{ to: '62', message: '' }"
+                          @submit.prevent="() => {
+                          $store.instance.sendMessage(to, message);
+                          const phone = to;
+                          to = '62';
+                          message = '';
+                          open = false;
+                          $nextTick(() => { $store.instance.onChatSelected(phone) });
+                          }">
+                        <div class="border border-gray-300 rounded-lg shadow-sm overflow-hidden focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 pb-16">
+                            <label for="to" class="sr-only">to</label>
+                            <input x-model="to" type="text" name="to" id="to" class="block w-full border-b border-gray-200 focus:border-gray-200 pt-2.5 text-lg font-medium placeholder-gray-500 focus:ring-0" placeholder="Nomor Tujuan">
+                            <label for="message" class="sr-only">message</label>
+                            <textarea x-model="message" rows="6" name="message" id="message" class="block w-full border-0 resize-none placeholder-gray-500 focus:ring-0 sm:text-sm" placeholder="Tulis pesan anda..."></textarea>
+                        </div>
+
+                        <div class="absolute bottom-0 inset-x-px">
+                            <!-- Actions: These are just examples to demonstrate the concept, replace/wire these up however makes sense for your project. -->
+                            <div class="flex flex-nowrap justify-end py-2 px-2 space-x-2 sm:px-3">
+
+                            </div>
+                            <div class="border-t border-gray-200 px-2 py-2 flex justify-between items-center space-x-3 sm:px-3">
+                                <div class="flex">
+                                    <button type="button" class="-ml-2 -my-2 rounded-full px-3 py-2 inline-flex items-center text-left text-gray-400 group">
+                                        <svg class="-ml-1 h-5 w-5 mr-2 group-hover:text-gray-500" x-description="Heroicon name: solid/paper-clip" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        <span class="text-sm text-gray-500 group-hover:text-gray-600 italic">Attach a file</span>
+                                    </button>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        Kirim
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>

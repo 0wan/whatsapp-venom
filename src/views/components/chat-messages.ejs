@@ -1,18 +1,28 @@
 <div class="grow px-4 sm:px-6 md:px-5 py-6 pb-16"
-     x-data="{ messages: $store.instance.messages }"
+     x-data="{ messages: $store.instance.messages, ctx: 0 }"
      x-init="$watch('$store.instance.messages', r => (messages = r))"
+     x-effect="ctx = messages.length; $nextTick(() => { $refs.chatmain.scrollTop = 99999999; })"
 >
     <template x-for="msg in messages">
     <div class="flex items-start mb-4 last:mb-0" x-transition>
-        <span class="rounded-full mr-4 w-6 h-6 bg-gray-200">
-            <img x-show="!msg.fromMe && !msg.isGroupMsg" 
+        <div class="flex-shrink-0 mr-4 ">
+            <span x-show="msg.fromMe" class="inline-block h-8 w-8 rounded-full overflow-hidden bg-gray-100">
+                <svg class="h-full w-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            </span>
+
+            <img class="inline-block rounded-full w-8 h-8 bg-gray-200"
+                 x-show="!msg.fromMe && !msg.isGroupMsg"
                  :src="msg.chat && msg.chat.contact && msg.chat.contact.profilePicThumbObj && msg.chat.contact.profilePicThumbObj.img ? msg.chat.contact.profilePicThumbObj.img : ''" 
                  width="32" height="32">
 
-            <img x-show="!msg.fromMe && msg.isGroupMsg" 
+            <img class="inline-block rounded-full w-8 h-8 bg-gray-200"
+                 x-show="!msg.fromMe && msg.isGroupMsg"
                  :src="msg.sender && msg.sender.profilePicThumbObj && msg.sender.profilePicThumbObj.img ? msg.sender.profilePicThumbObj.img : ''" 
                  width="32" height="32">     
-        </span>
+
+        </div>
         <div>
             <div class="text-sm p-3 rounded-lg rounded-tl-none border border-gray-200 shadow-md mb-1"
                  x-show="!(msg.isMedia === true || msg.isMMS === true) && (msg.type === 'chat' || msg.body)"
@@ -31,11 +41,16 @@
                  <img  :src="'data:'+msg.mimetype+';base64, '+msg.body" />
                  </a>
                  <span x-show="!msg.body">*image*</span>
-            </div>     
+            </div>
+
+            <div class="text-sm p-3 rounded-lg rounded-tl-none border border-gray-200 shadow-md mb-1"
+                 x-show="msg.type && msg.type === 'call_log'"
+                 x-html="'*' + msg.type + '*'"
+                 :class="msg.fromMe ? 'bg-indigo-500 text-white' : 'bg-white text-gray-800'"></div>
 
             <div class="flex items-center justify-between">
                 <div class="text-xs text-gray-500 font-medium"
-                     x-html="moment.unix(msg.timestamp || msg.t).fromNow()"></div>
+                     x-html="moment.unix(msg.timestamp || msg.t).format('lll')"></div>
                 <div x-show="msg.ack == 2">
                     <svg class="w-3 h-3 shrink-0 fill-current text-gray-400" viewBox="0 0 12 12">
                         <path d="M10.28 1.28L3.989 7.575 1.695 5.28A1 1 0 00.28 6.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 1.28z" />
@@ -50,4 +65,34 @@
         </div>
     </div>
     </template>
+    <div class="flex items-start mb-4 last:mb-16"
+         x-data="{show : false}"
+         x-init="$watch('$store.instance.loading', (r) => {
+         show = r;
+         $nextTick(() => { $refs.chatmain.scrollTop = 99999999; })
+         })"
+         x-show="show">
+        <div class="flex-shrink-0 mr-4 ">
+            <span class="inline-block h-8 w-8 rounded-full overflow-hidden bg-gray-100">
+                <svg class="h-full w-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            </span>
+        </div>
+        <div>
+            <div class="text-sm bg-white text-gray-800 p-3 rounded-lg rounded-tl-none border border-gray-200 shadow-md mb-1">
+                <svg class="fill-current text-gray-400" viewBox="0 0 15 3" width="15" height="3">
+                    <circle cx="1.5" cy="1.5" r="1.5">
+                        <animate attributeName="opacity" dur="1s" values="0;1;0" repeatCount="indefinite" begin="0.1" />
+                    </circle>
+                    <circle cx="7.5" cy="1.5" r="1.5">
+                        <animate attributeName="opacity" dur="1s" values="0;1;0" repeatCount="indefinite" begin="0.2" />
+                    </circle>
+                    <circle cx="13.5" cy="1.5" r="1.5">
+                        <animate attributeName="opacity" dur="1s" values="0;1;0" repeatCount="indefinite" begin="0.3" />
+                    </circle>
+                </svg>
+            </div>
+        </div>
+    </div>
 </div>

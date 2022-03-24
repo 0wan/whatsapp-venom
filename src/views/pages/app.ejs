@@ -153,6 +153,7 @@
 
                 <%- include('../components/chat-header'); %>
                 <%- include('../components/chat-messages'); %>
+                <%- include('../components/chat-empty'); %>
                 <%- include('../components/chat-form'); %>
 
             </section>
@@ -169,6 +170,7 @@
     </div>
 </div>
 <%- include('../components/chat-auth'); %>
+<%- include('../components/chat-compose'); %>
 <script>
     moment().locale('id');
 
@@ -208,6 +210,10 @@
                 // if (res && res.data && (res.error !== true)) this.messages = res.data                
                 socket.emit('ws:message:all', { phone:phone })
             },
+            getMoreMessages(phone) {
+                this.messages = [];
+                socket.emit('ws:message:more', { phone:phone })
+            },
             onChatSelected(phone) {
                 this.selected = phone
                 this.getMessages(phone)
@@ -226,8 +232,11 @@
                     this.ev('chat-updated', { scroll: true })
                 }
             },
+            sendSeen(phone) {
+                socket.emit('ws:message:seen', { phone:phone })
+            },
             async sendMessage(to, message) {
-                // this.loading = true
+                this.loading = true
                 // const res = await ( await fetch('/message/text?key=' + this.token
                 //     + '&id=' + encodeURI(to)
                 //     + '&message=' + encodeURI(message)
@@ -290,19 +299,25 @@
                 })
 
                 socket.on('wa:message:all', function ({ data }) {
-                    that.messages = data
+                    that.messages = data || []
                 })
 
                 // listen new message
                 socket.on('wa:message:new', function ({ data }) {
-                    
+                    if (data.fromMe) {
+                        that.loading = false
+                    }
+
                     // listen new chat, if from/remote not in this.chats
+                    const chatIndex = that.chats.findIndex((c) => c.id._serialized === data.chatId)
+                    if (!chatIndex || (chatIndex > 5)) {
+                        that.getChat()
+                    }
 
                     // auto insert message if new message == current selected
-                    
-                        if (data.chatId === that.selected) {
-                            that.messages.push(data)
-                        }
+                    if (data.chatId === that.selected) {
+                        that.messages.push(data)
+                    }
                 })
 
                 socket.on('wa:message:ack', function ({ data }) {

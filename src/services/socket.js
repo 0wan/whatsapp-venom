@@ -59,6 +59,20 @@ class Server {
                 })
             })
 
+            client.on('ws:message:more', (data) => {
+                logger.info('ws:message:more')
+                logger.info(data)
+                // that.sendAllMessages(data.phone).catch(e => logger.info(e))
+                whatsapp.getMoreMessages(data.phone).then((result) => {
+                    this.socket.emit('wa:message:all', {data: result})
+                })
+            })
+
+            client.on('ws:message:seen', (data) => {
+                whatsapp.sendActionSeen(data.phone).then((result) => {
+                })
+            })
+
             client.on('ws:send:text', ({to, message}) => {
                 whatsapp.sendTextMessage(to, message).then(() => {
                 })

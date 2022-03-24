@@ -208,94 +208,144 @@ class Whatsapp {
     // Sending
     
     async sendTextMessage(to, message) {
-        await this.verifyId(this.getWhatsAppId(to))
-        const data = await this.client?.sendText(this.getWhatsAppId(to), message)
-        return data
+        try {
+            await this.verifyId(this.getWhatsAppId(to))
+            const data = await this.client?.sendText(this.getWhatsAppId(to), message)
+            return data
+        } catch (e) {}
     }
 
     async sendListMessage(to, title, subtitle, description, btnText, list) {
-        await this.verifyId(this.getWhatsAppId(to))
-        const data = await this.client?.sendListMenu(this.getWhatsAppId(to), title, subtitle, description, btnText, list)
-        return data
+        try {
+            await this.verifyId(this.getWhatsAppId(to))
+            const data = await this.client?.sendListMenu(this.getWhatsAppId(to), title, subtitle, description, btnText, list)
+            return data
+        } catch (e) {}
     }
 
     async sendButtonMessage(to, title, buttons, description) {
-        await this.verifyId(this.getWhatsAppId(to))
-        const data = await this.client?.sendButtons(this.getWhatsAppId(to), title, buttons, description)
-        return data
+        try {
+            await this.verifyId(this.getWhatsAppId(to))
+            const data = await this.client?.sendButtons(this.getWhatsAppId(to), title, buttons, description)
+            return data
+        } catch (e) {}
     }
 
     async sendFileMessage(to, fileOrBase64, filename, message, isBase64 = true) {
-        await this.verifyId(this.getWhatsAppId(to))
-        const data = await (isBase64)
-            ? this.client?.sendFileFromBase64(this.getWhatsAppId(to), fileOrBase64, filename, message)
-            : this.client?.sendFile(this.getWhatsAppId(to), fileOrBase64, filename, message)
-        return data
+        try {
+            await this.verifyId(this.getWhatsAppId(to))
+            const data = await (isBase64)
+                ? this.client?.sendFileFromBase64(this.getWhatsAppId(to), fileOrBase64, filename, message)
+                : this.client?.sendFile(this.getWhatsAppId(to), fileOrBase64, filename, message)
+            return data
+        } catch (e) {
+            
+        }
     }
 
     async sendImageMessage(to, image, filename, message, isBase64 = true) {
-        await this.verifyId(this.getWhatsAppId(to))
-        const data = await (isBase64)
-            ? this.client?.sendImageFromBase64(this.getWhatsAppId(to), image, filename, message)
-            : this.client?.sendImage(this.getWhatsAppId(to), image, filename, message)
-        return data
+        try {
+            await this.verifyId(this.getWhatsAppId(to))
+            const data = await (isBase64)
+                ? this.client?.sendImageFromBase64(this.getWhatsAppId(to), image, filename, message)
+                : this.client?.sendImage(this.getWhatsAppId(to), image, filename, message)
+            return data
+        } catch (e) {
+            
+        }
     }
 
     async sendImageSticker(to, image, isGif = false) {
-        await this.verifyId(this.getWhatsAppId(to))
-        const data = await (isGif)
-            ? this.client?.sendImageAsStickerGif(this.getWhatsAppId(to), image)
-            : this.client?.sendImageAsSticker(this.getWhatsAppId(to), image)
-        return data
+        try {
+            await this.verifyId(this.getWhatsAppId(to))
+            const data = await (isGif)
+                ? this.client?.sendImageAsStickerGif(this.getWhatsAppId(to), image)
+                : this.client?.sendImageAsSticker(this.getWhatsAppId(to), image)
+            return data
+        } catch (e) {
+            
+        }
     }
 
     async sendVoiceMessage(to, message, isBase64 = true) {
-        await this.verifyId(this.getWhatsAppId(to))
-        const data = await (isBase64)
-            ? this.client?.sendVoiceBase64(this.getWhatsAppId(to), message)
-            : this.client?.sendVoice(this.getWhatsAppId(to), message)
-        return data
+        try {
+            await this.verifyId(this.getWhatsAppId(to))
+            const data = await (isBase64)
+                ? this.client?.sendVoiceBase64(this.getWhatsAppId(to), message)
+                : this.client?.sendVoice(this.getWhatsAppId(to), message)
+            return data
+        } catch (e) {
+            
+        }
     }
 
     async sendLinkMessage(to, link, message) {
-        await this.verifyId(this.getWhatsAppId(to))
-        const data = await this.client?.sendLinkPreview(this.getWhatsAppId(to), link, message)
-        return data
+        try {
+            await this.verifyId(this.getWhatsAppId(to))
+            const data = await this.client?.sendLinkPreview(this.getWhatsAppId(to), link, message)
+            return data
+        } catch (e) {
+
+        }
     }
 
     async sendReplyMessage(to, message, fromMessageId) {
-        await this.verifyId(this.getWhatsAppId(to))
-        const data = await this.client?.sendReplyMessage(this.getWhatsAppId(to), message, fromMessageId)
-        return data
+        try {
+            await this.verifyId(this.getWhatsAppId(to))
+            const data = await this.client?.sendReplyMessage(this.getWhatsAppId(to), message, fromMessageId)
+            return data
+        } catch (e) {
+
+        }
     }
 
     async sendActionSeen(to, check = true) {
-        if (check) await this.verifyId(this.getWhatsAppId(to))
-        await this.client?.sendSeen(this.getWhatsAppId(to))
+        try {
+            if (check) await this.verifyId(this.getWhatsAppId(to))
+            await this.client?.sendSeen(this.getWhatsAppId(to))
+        } catch (e) {
+
+        }
     }
 
     async sendActionTypingStart(to, check = true) {
-        if (check) await this.verifyId(this.getWhatsAppId(to))
-        await this.client?.startTyping(this.getWhatsAppId(to))
+        try {
+            if (check) await this.verifyId(this.getWhatsAppId(to))
+            await this.client?.startTyping(this.getWhatsAppId(to))
+        } catch (e) {
+
+        }
     }
 
     async sendActionTypingStop(to, check = true) {
-        if (check) await this.verifyId(this.getWhatsAppId(to))
-        await this.client?.stopTyping(this.getWhatsAppId(to))
+        try {
+            if (check) await this.verifyId(this.getWhatsAppId(to))
+            await this.client?.stopTyping(this.getWhatsAppId(to))
+        } catch (e) {
+
+        }
     }
 
     // message
 
     async getAllMessages(to, includeMe = true, includeNotify = true) {
-        await this.verifyId(this.getWhatsAppId(to))
-        const data = await this.client?.getAllMessagesInChat(this.getWhatsAppId(to), includeMe, includeNotify)
-        return data
+        try {
+            await this.verifyId(this.getWhatsAppId(to))
+            const data = await this.client?.getAllMessagesInChat(this.getWhatsAppId(to), includeMe, includeNotify)
+            return data
+        } catch (e) {
+
+        }
     }
 
-    async getOldMessages(to, includeMe = true, includeNotify = true) {
-        await this.verifyId(this.getWhatsAppId(to))
-        const data = await this.client?.loadAndGetAllMessagesInChat(this.getWhatsAppId(to), includeMe, includeNotify)
-        return data
+    async getMoreMessages(to, includeMe = true, includeNotify = true) {
+        try {
+            await this.verifyId(this.getWhatsAppId(to))
+            const data = await this.client?.loadAndGetAllMessagesInChat(this.getWhatsAppId(to), includeMe, includeNotify)
+            return data
+        } catch (e) {
+
+        }
     }
 
     // Clear chat messages
