@@ -71,6 +71,7 @@ class Whatsapp {
 
             // add custom field
             message.fileStoragePath = null
+            message.fileStorageURL = null
 
             if (message.isMedia === true || message.isMMS === true) {
                 const buffer = await this.client?.decryptFile(message);
@@ -82,11 +83,14 @@ class Whatsapp {
                     //
                 });
                 message.fileStoragePath = fileName
+                message.fileStorageURL = fileName.replace(path.join(__dirname,`../storage`), '')                
             }
 
             // logger.info('onAnyMessage')
             // logger.info(message)
             await Message.create(this.key, message)
+
+            Socket.socket.emit('wa:message:new', {data:message})
         })
 
         // Listen to messages /  Hanya pesan masuk
@@ -107,7 +111,7 @@ class Whatsapp {
             //     });
             // }
 
-            logger.info('onMessage')
+            // logger.info('onMessage')
             // logger.info(message)
             // await Message.create(this.key, message)
         })
@@ -129,6 +133,7 @@ class Whatsapp {
         // UNPAIRED
         // UNPAIRED_IDLE
         this.client.onStateChange(state => {
+            Socket.socket.emit('wa:instance:state', {state:state})
             // logger.info('State has changed, new state : ')
             // logger.info(state)
             // force whatsapp take over
@@ -160,6 +165,8 @@ class Whatsapp {
             // {id: { fromMe, remote, id, _serialized}  } , messageId => id._serialized
             // field to update => ack ,
             await Message.ack(this.key, ack.id._serialized, ack.ack).catch(() => { })
+
+            Socket.socket.emit('wa:message:ack', {data:ack})
         });
 
         // function to detect incoming call

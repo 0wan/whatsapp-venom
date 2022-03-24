@@ -3,8 +3,7 @@ const logger = require('pino')()
 const middleware = require('../middleware/verifySocketKeyToken')
 
 class Server {
-    socket
-    whatsapp
+    socket    
 
     constructor(app) {
         this.socket = new SocketServer(app)
@@ -12,48 +11,64 @@ class Server {
         this.setHandler()
     }
 
-    setHandler() {
-        const that = this
-        this.socket.on('connection', (sock) => {
-            console.log('a user conn', sock)
-            that.whatsapp = WhatsApps[sock.handshake.auth.key]
+    setHandler() {        
+        this.socket.on('connection', (client) => {            
+            const whatsapp = WhatsApps[client.handshake.auth.key]
 
-            if ( [
+            if ([
+                'initializing',
+                'autocloseCalled',
+            ].includes(whatsapp.instance.status)) {
+                client.disconnect()
+            }
+
+            if ([
                 'notLogged',
                 'qrReadFail',
-            ].includes(that.whatsapp.instance.status)  )
-            {
-                that.whatsapp.restartService()
+            ].includes(whatsapp.instance.status)) {
+                logger.info('Restarting whatsapp service...')
+                whatsapp.restartService()
             }
-            else
-            {
-                that.sendAllChats().catch()
+            if ([
+                'isLogged',
+                'qrReadSuccess',
+                'chatsAvailable'
+            ].includes(whatsapp.instance.status)) {
+                try {
+                    whatsapp?.getAllChats().then((result) => {
+                        this.socket.emit('wa:chat:all', {data: result})
+                    })
+                } catch (e) {
+                }
+
             }
+
+            client.on('ws:chat:all', (data) => {
+                // that.sendAllChats().catch(e => logger.info(e))
+                whatsapp.getAllChats().then((result) => {
+                    this.socket.emit('wa:chat:all', {data: result})
+                })
+            })
+
+            client.on('ws:message:all', (data) => {
+                logger.info('ws:message:all')
+                logger.info(data)
+                // that.sendAllMessages(data.phone).catch(e => logger.info(e))
+                whatsapp.getAllMessages(data.phone).then((result) => {
+                    this.socket.emit('wa:message:all', {data: result})
+                })
+            })
+
+            client.on('ws:send:text', ({to, message}) => {
+                whatsapp.sendTextMessage(to, message).then(() => {
+                })
+            })
+
         })
 
         // this.socket.onAny((event, ...args) => {
         //     console.log(event, args);
         // });
-
-        this.socket.on('ws:chat:all', (data) => {
-            that.sendAllChats().catch(e => logger.info(e))
-        })
-
-        this.socket.on('ws:message:all', (data) => {
-            logger.info('ws:message:all')
-            logger.info(data)
-            that.sendAllMessages(data.phone).catch(e => logger.info(e))
-        })
-    }
-
-    async sendAllChats() {
-        const result = await this.whatsapp?.getAllChats()
-        this.socket.emit('wa:chat:all', {data: result})
-    }
-
-    async sendAllMessages(to) {
-        const result = await this.whatsapp?.getAllMessages(to)
-        this.socket.emit('wa:message:all', {data: result})
     }
 }
 

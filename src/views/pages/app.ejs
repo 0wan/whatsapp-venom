@@ -4,15 +4,20 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Whatsapp Hub</title>
+    <title>Whatsapp Venom</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp"></script>
     <!-- Alpine Core -->
     <script defer src="https://unpkg.com/alpinejs@3.9.1/dist/cdn.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/locale/id.min.js" integrity="sha512-he8U4ic6kf3kustvJfiERUpojM8barHoz0WYpAUDWQVn61efpm3aVAD8RWL8OloaDDzMZ1gZiubF9OSdYBqHfQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <style>
+        html {
+  scroll-behavior: smooth;
+}
+    </style>
 </head>
-<body class="h-full overflow-hidden">
+<body class="h-full overflow-hidden">    
 <div x-data="{ open: false }" @keydown.window.escape="open = false" class="h-full flex">
 
     <div x-show="open" class="fixed inset-0 flex z-40 lg:hidden" x-description="Off-canvas menu for mobile, show/hide based on off-canvas menu state." x-ref="dialog" aria-modal="true">
@@ -177,14 +182,17 @@
             selected: '',
             loading: true,
             showQr: false,
-            qr: '',
+            qr: '',            
             chats: [],
+            groups: [],
             messages: [],
+            archives: [],
             contact: {}, //
-
+            
             init() {
                 socket.auth = { key: this.token }
                 this.socketHandler()
+                this.loading = false
             },
             getStatus() {
                 socket.emit('ws:instance:status', { token: this.token })
@@ -197,8 +205,7 @@
             getMessages(phone) {
                 this.messages = [];
                 // const res = await ( await fetch('/message/find?key=' + this.token + '&phone=' + encodeURI(phone) )).json();
-                // if (res && res.data && (res.error !== true)) this.messages = res.data
-                console.log('ws:message:all',phone)
+                // if (res && res.data && (res.error !== true)) this.messages = res.data                
                 socket.emit('ws:message:all', { phone:phone })
             },
             onChatSelected(phone) {
@@ -220,37 +227,41 @@
                 }
             },
             async sendMessage(to, message) {
-                this.loading = true
-                const res = await ( await fetch('/message/text?key=' + this.token
-                    + '&id=' + encodeURI(to)
-                    + '&message=' + encodeURI(message)
-                    , { method: 'POST' })).json();
-                this.loading = false
-                this.sortChat(to)
+                // this.loading = true
+                // const res = await ( await fetch('/message/text?key=' + this.token
+                //     + '&id=' + encodeURI(to)
+                //     + '&message=' + encodeURI(message)
+                //     , { method: 'POST' })).json();
+                // this.loading = false
+                // this.sortChat(to)
+                socket.emit('ws:send:text', { to:to, message:message })
             },
             socketHandler() {
                 const that = this
-                console.log('socket init')
+                
                 socket.connect()
 
-                socket.onAny((event, ...args) => {
-                    console.log('socket any')
+                // develop only
+                socket.onAny((event, ...args) => {                    
                     console.log(event, args);
                 });
 
                 socket.on("connect", () => {
-                    console.log('socket connect')
+                    // check if whatsapp server ready
+
+                    // get all chats on ready
+                    // that.getChat()
                 });
 
-                socket.on("connect_error", function (err) {
-                    console.error(err)
+                socket.on("connect_error", function (err) {                    
                     if (err.message === "key not available") {
-                        // that.showInit = true
+                        //
                     }
                     if (err.message === "instance not available") {
-                        console.log('socket instance not available')
-                        // that.showInit = true
+                        //
                     }
+
+                    socket.disconnect()
                 });
 
                 socket.on('wa:instance:qr', function ({ qr }) {
@@ -271,16 +282,32 @@
                 })
 
                 socket.on('wa:chat:all', function ({ data }) {
-                    that.chats = data
+                    that.chats = data.filter((c) => !c.archive)
+                    // enable later
+                    // that.chats = data.filter((c) => !c.archive && !c.isGroup)
+                    // that.groups = data.filter((c) => !c.archive && c.isGroup)
+                    // that.archives = data.filter((c) => c.archive)
                 })
 
                 socket.on('wa:message:all', function ({ data }) {
                     that.messages = data
                 })
 
-                // listen new chat
                 // listen new message
-                // auto insert message if new message == current selected
+                socket.on('wa:message:new', function ({ data }) {
+                    
+                    // listen new chat, if from/remote not in this.chats
+
+                    // auto insert message if new message == current selected
+                    
+                        if (data.chatId === that.selected) {
+                            that.messages.push(data)
+                        }
+                })
+
+                socket.on('wa:message:ack', function ({ data }) {
+                    // update ack status message                                            
+                })
             },
             ev(name, detail) {
                 window.dispatchEvent(
