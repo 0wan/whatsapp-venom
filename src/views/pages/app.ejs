@@ -13,8 +13,8 @@
     <script src="/socket.io/socket.io.js"></script>
     <style>
         html {
-  scroll-behavior: smooth;
-}
+            scroll-behavior: smooth;
+        }
     </style>
 </head>
 <body class="h-full overflow-hidden">    
@@ -196,6 +196,10 @@
                 this.socketHandler()
                 this.loading = false
             },
+            initialize() {
+                this.loading = true
+                socket.emit('ws:instance:init', { token: this.token })
+            },
             getStatus() {
                 socket.emit('ws:instance:status', { token: this.token })
             },
@@ -264,18 +268,20 @@
 
                 socket.on("connect_error", function (err) {                    
                     if (err.message === "key not available") {
-                        //
+                        console.error(err.message)
                     }
-                    if (err.message === "instance not available") {
-                        //
+                    else if (err.message === "instance not available") {
+                        console.error(err.message)
+                        that.initialize()
                     }
-
+                    else
                     socket.disconnect()
                 });
 
                 socket.on('wa:instance:qr', function ({ qr }) {
                     that.qr = qr
                     that.showQr = true
+                    that.loading = false
                 })
 
                 socket.on('wa:instance:status', function ({ status }) {
@@ -285,6 +291,7 @@
                         'chatsAvailable'
                     ].includes(status)) {
                         that.showQr = false
+                        that.loading = false
                         that.getChat()
                     }
 

@@ -1,6 +1,7 @@
 const { Server: SocketServer } = require('socket.io');
 const logger = require('pino')()
 const middleware = require('../middleware/verifySocketKeyToken')
+const {Whatsapp} = require("./whatsapp");
 
 class Server {
     socket    
@@ -13,13 +14,13 @@ class Server {
 
     setHandler() {        
         this.socket.on('connection', (client) => {            
-            const whatsapp = WhatsApps[client.handshake.auth.key]
+            let whatsapp = WhatsApps[client.handshake.auth.key]
 
             if ([
                 'initializing',
                 'autocloseCalled',
             ].includes(whatsapp.instance.status)) {
-                client.disconnect()
+                // client.disconnect()
             }
 
             if ([
@@ -42,6 +43,15 @@ class Server {
                 }
 
             }
+
+            client.on('ws:instance:init', async (data) => {
+                const token = data.token
+
+                WhatsApps[token] = new Whatsapp(token)
+                await WhatsApps[token].init()
+
+                whatsapp = WhatsApps[token]
+            })
 
             client.on('ws:chat:all', (data) => {
                 // that.sendAllChats().catch(e => logger.info(e))

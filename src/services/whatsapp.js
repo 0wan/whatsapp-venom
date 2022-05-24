@@ -139,7 +139,7 @@ class Whatsapp {
             // force whatsapp take over
             if ('CONFLICT'.includes(state)) {
                 try {
-                    this.client.useHere();
+                    // this.client.useHere();
                 } catch {}
             }
             // detect disconnect on whatsapp
