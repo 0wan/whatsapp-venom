@@ -5,21 +5,22 @@ const { v4: uuidv4 } = require('uuid')
 const mime = require('mime-types');
 const QRCode = require('qrcode')
 const venom = require('venom-bot');
-const config = require('../config/app')
-const Message = require('../repositories/message.repository')
+const config = require('../config/config')
+// const Message = require('../repositories/message.repository')
 
 class Whatsapp {
     client
-    key = ''
+    session = ''
     instance = {
-        key: this.key,
+        status: 'initializing',
+        session: this.session,
         qr: '',
         chats: [],
         messages: [],
     }
 
-    constructor(key) {
-        this.key = key ? key : uuidv4()
+    constructor(session) {
+        this.session = session ? session : config.sessionName
     }
 
     async init() {
@@ -28,10 +29,14 @@ class Whatsapp {
         venom
             .create(
                 //session
-                this.key,
+                this.session,
                 (base64Qrimg, asciiQR, attempts, urlCode) => {
                     this.instance.qr = base64Qrimg
-                    Socket.socket.emit('wa:instance:qr', { qr: base64Qrimg, attempts })
+                    // Socket.socket.emit('wa:instance:qr', { qr: base64Qrimg, attempts })
+                    Pusher.trigger('whatsapp', 'instance-qr', {
+                        qr: base64Qrimg,
+                        attempts
+                    }).catch(() => {})
                 },
                 (statusSession, session) => {
                     // statusSession: isLogged || notLogged || browserClose || qrReadSuccess || qrReadFail || autocloseCalled || desconnectedMobile || deleteToken || chatsAvailable || deviceNotConnected || serverWssNotConnected || noOpenBrowser
@@ -39,16 +44,19 @@ class Whatsapp {
                     //Create session wss return "serverClose" case server for close
                     this.instance.session = session
 
-                    Socket.socket.emit('wa:instance:status', { status: statusSession })
+                    // Socket.socket.emit('wa:instance:status', { status: statusSession })
+                    Pusher.trigger('whatsapp', 'instance-status', {
+                        status: statusSession
+                    }).catch(() => {})
                 },
                 {
                     multidevice: true,
                     folderNameToken: 'tokens', //folder name when saving `tokens`
                     mkdirFolderToken: path.join(__dirname, '../storage'), //folder directory tokens, just inside the venom folder, example:  { mkdirFolderToken: '/node_modules', } //will save the tokens folder in the node_modules directory
                     logQR: false,
-                    // browserArgs: [
-                    //     '--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
-                    // ],
+                    browserArgs: [
+                        '--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'
+                    ],
                 }
             )
             .then((agent) => { this.setHandler(agent) })
@@ -63,34 +71,36 @@ class Whatsapp {
         this.client = agent
         //Listens to all new messages
         //To receiver or recipient
-        // Gunakan untuk log pesan masuk dan keluar
-        // baiknya disimpan di database
+        // Gunakan untuk log pesan masuk dan keluar, baiknya disimpan di database
         this.client.onAnyMessage(async (message) => {
             // filter hanya pesan yang diterima/dikirim user
             if (['status@broadcast'].includes(message.from)) return;
 
-            // add custom field
-            message.fileStoragePath = null
-            message.fileStorageURL = null
+            // // add custom field
+            // message.fileStoragePath = null
+            // message.fileStorageURL = null
+            //
+            // if (message.isMedia === true || message.isMMS === true) {
+            //     const buffer = await this.client?.decryptFile(message);
+            //     // At this point you can do whatever you want with the buffer
+            //     // Most likely you want to write it into a file
+            //     const hash = uuidv4()
+            //     const fileName = path.join(__dirname,`../storage/media/${this.session}-${hash}.${mime.extension(message.mimetype)}`);
+            //     await fs.writeFile(fileName, buffer, (err) => {
+            //         //
+            //     });
+            //     message.fileStoragePath = fileName
+            //     message.fileStorageURL = fileName.replace(path.join(__dirname,`../storage`), '')
+            // }
+            //
+            // // logger.info('onAnyMessage')
+            // // logger.info(message)
+            // await Message.create(this.session, message)
 
-            if (message.isMedia === true || message.isMMS === true) {
-                const buffer = await this.client?.decryptFile(message);
-                // At this point you can do whatever you want with the buffer
-                // Most likely you want to write it into a file
-                const hash = uuidv4()
-                const fileName = path.join(__dirname,`../storage/media/${this.key}-${hash}.${mime.extension(message.mimetype)}`);
-                await fs.writeFile(fileName, buffer, (err) => {
-                    //
-                });
-                message.fileStoragePath = fileName
-                message.fileStorageURL = fileName.replace(path.join(__dirname,`../storage`), '')                
-            }
-
-            // logger.info('onAnyMessage')
-            // logger.info(message)
-            await Message.create(this.key, message)
-
-            Socket.socket.emit('wa:message:new', {data:message})
+            // Socket.socket.emit('wa:message:new', {data:message})
+            Pusher.trigger('whatsapp', 'message-any', {
+                message: message
+            }).catch(() => {})
         })
 
         // Listen to messages /  Hanya pesan masuk
@@ -105,7 +115,7 @@ class Whatsapp {
             //     // At this point you can do whatever you want with the buffer
             //     // Most likely you want to write it into a file
             //     const hash = uuidv4()
-            //     const fileName = path.join(__dirname,`../storage/media/${this.key}-${hash}.${mime.extension(message.mimetype)}`);
+            //     const fileName = path.join(__dirname,`../storage/media/${this.session}-${hash}.${mime.extension(message.mimetype)}`);
             //     await fs.writeFile(fileName, buffer, (err) => {
             //         //
             //     });
@@ -113,7 +123,11 @@ class Whatsapp {
 
             // logger.info('onMessage')
             // logger.info(message)
-            // await Message.create(this.key, message)
+            // await Message.create(this.session, message)
+
+            Pusher.trigger('whatsapp', 'message-inbound', {
+                message: message
+            }).catch(() => {})
         })
 
         // Listen to state changes
@@ -133,13 +147,17 @@ class Whatsapp {
         // UNPAIRED
         // UNPAIRED_IDLE
         this.client.onStateChange(state => {
-            Socket.socket.emit('wa:instance:state', {state:state})
+            // Socket.socket.emit('wa:instance:state', {state:state})
+            Pusher.trigger('whatsapp', 'instance-state', {
+                state:state
+            }).catch(() => {})
+
             // logger.info('State has changed, new state : ')
             // logger.info(state)
             // force whatsapp take over
             if ('CONFLICT'.includes(state)) {
                 try {
-                    this.client.useHere();
+                    // this.client.useHere();
                 } catch {}
             }
             // detect disconnect on whatsapp
@@ -164,9 +182,12 @@ class Whatsapp {
         this.client.onAck(async (ack) => {
             // {id: { fromMe, remote, id, _serialized}  } , messageId => id._serialized
             // field to update => ack ,
-            await Message.ack(this.key, ack.id._serialized, ack.ack).catch(() => { })
+            // await Message.ack(this.session, ack.id._serialized, ack.ack).catch(() => { })
 
-            Socket.socket.emit('wa:message:ack', {data:ack})
+            // Socket.socket.emit('wa:message:ack', {data:ack})
+            Pusher.trigger('whatsapp', 'message-ack', {
+                ack: ack
+            }).catch(() => {})
         });
 
         // function to detect incoming call
@@ -176,9 +197,9 @@ class Whatsapp {
 
     }
 
-    async getInstanceDetail(key) {
+    async getInstanceDetail(session) {
         return {
-            instance_key: key,
+            instance_key: session,
             status: this.instance?.status,
             session: this.instance?.session,
         }

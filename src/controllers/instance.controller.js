@@ -3,21 +3,27 @@ const path = require('path')
 const { Whatsapp } = require('../services/whatsapp')
 
 exports.init = async (req, res) => {
-    const key = req.query.key
-    const instance = new Whatsapp(key)
-    const data = await instance.init()
-    WhatsApps[data.key] = instance
+    // const key = req.query.key
+    // const instance = new Whatsapp(key)
+    // const data = await instance.init()
+    // WhatsApps[data.key] = instance
+
+    if (WhatsApps) {
+        WhatsApps.close()
+    }
+
+    await WhatsApps.init()
 
     res.json({
         error: false,
         message: 'Initializing successfull',
-        key: data.key,
+        // key: data.key,
     })
 }
 
 exports.qr = async (req, res) => {
     try {
-        const qrcode = await WhatsApps[req.query.key].instance.qr
+        const qrcode = await WhatsApps.instance.qr
         res.render('pages/qr', {
             qrcode: qrcode
         })
@@ -31,7 +37,7 @@ exports.qr = async (req, res) => {
 }
 
 exports.info = async (req, res) => {
-    const instance = WhatsApps[req.query.key]
+    const instance = WhatsApps
     let data = ''
     try {
         data = await instance.getInstanceDetail(req.query.key)

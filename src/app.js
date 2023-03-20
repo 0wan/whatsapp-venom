@@ -1,35 +1,45 @@
+const dotenv = require('dotenv')
 const mongoose = require('mongoose')
 const logger = require('pino')()
+dotenv.config()
 
 const app = require('./config/server')
-const config = require('./config/app')
-const {Whatsapp} = require("./services/whatsapp");
+const config = require('./config/config')
+const { Whatsapp } = require('./services/whatsapp')
 
 let server
-let db
 
-mongoose.connect(config.mongoose.url, config.mongoose.options)
-db = mongoose.connection
-db.on('error', (err) => unexpectedErrorHandler(err))
-db.once('open', () => logger.info(`Database Connected`))
+// mongoose.set('strictQuery', false)
+// mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
+//     logger.info(`Database Connected`)
+// }).catch((err) => unexpectedErrorHandler(err))
 
 server = app.listen(config.port, () => {
     logger.info(`Listening to port ${config.port}`)
-})
-
-server.on('listening', async () => {
     logger.info(`Starting session ${config.sessionName}`)
-    WhatsApps[config.sessionName] = new Whatsapp(config.sessionName)
+    global.WhatsApps = new Whatsapp(config.sessionName)
 
-    await WhatsApps[config.sessionName].init()
+    WhatsApps.init().then(() => {
+        logger.info(`Session ${config.sessionName} started.`)
+    })
 })
+
+// server.on('listening', async () => {
+//     logger.info(`Starting session ${config.sessionName}`)
+//     WhatsApps[config.sessionName] = new Whatsapp(config.sessionName)
+//
+//     await WhatsApps[config.sessionName].init()
+// })
 
 const exitClients = () => {
-    const clients = Object.keys(WhatsApps)
-    clients.map((c) => {
-        const client = WhatsApps[c]
-        client.close()
-    })
+    // const clients = Object.keys(WhatsApps)
+    // clients.map((c) => {
+    //     const client = WhatsApps[c]
+    //     client.close()
+    // })
+    if (WhatsApps) {
+        WhatsApps.close()
+    }
 }
 
 const exitHandler = () => {
@@ -53,7 +63,13 @@ process.on('uncaughtException', unexpectedErrorHandler)
 process.on('unhandledRejection', unexpectedErrorHandler)
 
 process.on('SIGTERM', () => {
-    logger.info('SIGTERM received')
+    exitClients()
+    if (server) {
+        server.close()
+    }
+})
+
+process.on('SIGINT', () => {
     exitClients()
     if (server) {
         server.close()
